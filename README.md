@@ -52,7 +52,7 @@ $ deactivate
 
 ### 7. 次から一発で起動
 ```
-$ . .venv/chatbot/bin/activate && python chatbot/chatbot.py &
+$ . ~/.venv/chatbot/bin/activate && cd ~/chatbot && python chatbot.py &
 ```
 
 ### 8. kill で停止
