@@ -20,22 +20,32 @@ pub_port = config['publishing'].getint('port')
 cli = chatwork.auth(key)
 me = cli.me().account_id
 
-httpd = subprocess.Popen(
-  ['python', '-m', 'http.server', str(pub_port)],
-  cwd=repo)
+httpd = None
+
+
+def publish():
+  global httpd
+
+  if httpd:
+    httpd.kill()
+    httpd.communicate()
+
+  httpd = subprocess.Popen(
+    ['python', '-m', 'http.server', str(pub_port)],
+    cwd=repo)
 
 
 @atexit.register
 def exit_handler():
-  httpd.kill()
+  global httpd
+
+  if httpd:
+    httpd.kill()
+    httpd.communicate()
 
 
 def term_handler(signal, frame):
   exit()
-
-
-signal.signal(signal.SIGINT, term_handler)
-signal.signal(signal.SIGTERM, term_handler)
 
 
 def build(rev):
@@ -56,17 +66,19 @@ chmod +x gradlew && \\
 
   cli.post('Now building...')
 
-  stdout, stderr = proc.communicate()
+  outs, errs = proc.communicate()
 
   if proc.returncode == 0:
+    publish()
+
     cli.post("""Build successful.
 http://{addr}:{port}/app/build/outputs/apk
 """.format(
       addr=socket.gethostbyname(socket.gethostname()),
       port=pub_port))
 
-  elif stderr:
-    raise Exception(stderr.strip())
+  elif errs:
+    raise Exception(errs.strip())
 
 
 def respond(msgs):
@@ -92,6 +104,11 @@ def respond(msgs):
 {err}
 """.format(err=traceback.format_exc()))
 
+
+signal.signal(signal.SIGINT, term_handler)
+signal.signal(signal.SIGTERM, term_handler)
+
+publish()
 
 while True:
   try:
