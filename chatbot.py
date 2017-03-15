@@ -31,7 +31,7 @@ def publish():
     httpd.communicate()
 
   httpd = subprocess.Popen(
-    ['python', '-m', 'http.server', str(pub_port)],
+    ['nohup', 'python', '-m', 'http.server', str(pub_port)],
     cwd=repo)
 
 
